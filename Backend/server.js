@@ -1,14 +1,15 @@
+// server.js (main entry)
 const dotenv = require("dotenv");
-dotenv.config();
+dotenv.config(); // must run before anything uses process.env
 
 const connectDB = require("./src/config/db");
-connectDB();
-
 const app = require("./src/index");
 
-const PORT = process.env.PORT || 3000;
-const appName = process.env.APP_NAME;
+// connectDB();
 
-app.listen(PORT, (req, res) => {
+const PORT = process.env.PORT || 3000;
+const appName = process.env.APP_NAME || "GoApprove";
+
+app.listen(PORT, () => {
   console.log(`${appName} is running on http://localhost:${PORT}`);
 });

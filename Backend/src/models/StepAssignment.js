@@ -10,4 +10,3 @@ const StepAssignmentSchema = new Schema({
 StepAssignmentSchema.index({ instance_step_id: 1, approver_user_id: 1 }, { unique: true });
 
 module.exports = model('StepAssignment', StepAssignmentSchema);
-
