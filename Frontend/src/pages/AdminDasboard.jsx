@@ -1,97 +1,85 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '../contexts/AuthContext'; // Adjust this import path
-import { FileText, Banknote, Users, CalendarCheck2 } from 'lucide-react';
+import { AuthContext } from '../contexts/AuthContext';
+import { FileText, Banknote, Users, CalendarCheck2, CheckCircle, XCircle } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import ExpenseCard from '../components/Card'; // <-- Import the new ExpenseCard
+import Modal from '../components/Modal'; // <-- Import the Modal
+import RequestCard from '../components/Requestcard'; // <-- Import the detailed card
 
-// Mock data remains as a fallback
-const staticStats = {
-    pendingRequests: 12,
-    approvedThisMonth: 6,
-    expenseCategories: 8,
-    users: 50,
-};
-
+// --- UPDATED Mock Data to include details for the modal view ---
 const staticRequests = [
-    { _id: 'exp1', description: 'Client Dinner Meeting', date: '2025-10-04T10:00:00.000Z', employeeName: 'Priya Sharma', category: 'Meals', amount: 450.00 },
-    { _id: 'exp2', description: 'Office Supplies Purchase', date: '2025-10-03T14:30:00.000Z', employeeName: 'Rohan Verma', category: 'Office Supplies', amount: 120.50 },
-    { _id: 'exp3', description: 'Taxi Fare for Airport', date: '2025-10-02T08:00:00.000Z', employeeName: 'Anjali Singh', category: 'Travel', amount: 75.00 },
+    { 
+        _id: 'exp1', 
+        description: 'Client Dinner Meeting', 
+        date: '2025-10-04T10:00:00.000Z', 
+        employeeName: 'Priya Sharma', 
+        category: 'Meals', 
+        amount: 450.00,
+        // Detailed fields for RequestCard
+        title: 'Client Dinner Meeting',
+        employee: 'Priya Sharma',
+        currency: '₹',
+        progress: { currentStep: 2, totalSteps: 3, statusText: 'Awaiting Director Approval' },
+        managers: ['Rohan Verma (Manager)', 'Vikram Rathod (Finance)', 'Anjali Singh (Director)'],
+        attachmentUrl: '#'
+    },
+    { 
+        _id: 'exp2', 
+        description: 'Office Supplies Purchase', 
+        date: '2025-10-03T14:30:00.000Z', 
+        employeeName: 'Rohan Verma', 
+        category: 'Office Supplies', 
+        amount: 120.50,
+        // Detailed fields for RequestCard
+        title: 'Office Supplies Purchase',
+        employee: 'Rohan Verma',
+        currency: '₹',
+        progress: { currentStep: 1, totalSteps: 2, statusText: 'Awaiting Manager Approval' },
+        managers: ['Priya Sharma (Manager)', 'Vikram Rathod (Finance)'],
+        attachmentUrl: '#'
+    },
 ];
-
-// --- API Simulation Functions (Backend Ready) ---
-// This function will contain your actual API call to update status
-const updateExpenseStatusAPI = async (expenseId, status) => {
-    console.log(`Simulating API call to update expense ${expenseId} to ${status}`);
-    // ** UNCOMMENT THIS WHEN BACKEND IS READY **
-    // try {
-    //   await axios.patch(`/api/v1/expenses/${expenseId}/status`, { status });
-    //   return { success: true };
-    // } catch (error) {
-    //   console.error("Failed to update expense status:", error);
-    //   return { success: false, error };
-    // }
-    
-    // For now, we simulate a successful API call
-    return { success: true };
-};
-
 
 const AdminDashboard = () => {
     const { user } = useContext(AuthContext);
+    const [stats, setStats] = useState({ /* ...stats */ });
+    const [recentRequests, setRecentRequests] = useState([]);
+    
+    // --- STATE FOR MODAL ---
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedRequest, setSelectedRequest] = useState(null);
 
-    const [stats, setStats] = useState(staticStats);
-    const [recentRequests, setRecentRequests] = useState([]); // Start with empty array
-
-    // useEffect to handle data fetching (ready for API call)
     useEffect(() => {
-        const fetchRecentRequests = async () => {
-            console.log("Fetching recent requests...");
-            // ** UNCOMMENT THIS WHEN BACKEND IS READY **
-            // try {
-            //   const response = await axios.get('/api/v1/expenses/recent-pending');
-            //   setRecentRequests(response.data);
-            // } catch (error) {
-            //   console.error("Failed to fetch recent requests:", error);
-            //   setRecentRequests(staticRequests); // Fallback to mock data on error
-            // }
+        setRecentRequests(staticRequests);
+        setStats({ pendingRequests: 12, approvedThisMonth: 6, expenseCategories: 8, users: 50 });
+    }, []);
 
-            // For now, we use the mock data directly
-            setRecentRequests(staticRequests);
-        };
+    // --- MODAL HANDLERS ---
+    const handleOpenModal = (request) => {
+        setSelectedRequest(request);
+        setIsModalOpen(true);
+    };
 
-        fetchRecentRequests();
-    }, []); // Empty dependency array means this runs once on mount
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedRequest(null);
+    };
 
-
-    const handleApproval = async (expenseId, status) => {
-        const result = await updateExpenseStatusAPI(expenseId, status);
-
-        if (result.success) {
-            // If the API call was successful, update the UI
-            setRecentRequests(prevRequests =>
-                prevRequests.filter(req => req._id !== expenseId)
-            );
-
-            setStats(prevStats => ({
-                ...prevStats,
-                pendingRequests: prevStats.pendingRequests - 1,
-            }));
-        } else {
-            // Optionally, show an error message to the user
-            alert(`Failed to ${status} the expense. Please try again.`);
-        }
+    const handleApproval = (expenseId, status) => {
+        console.log(`Expense ${expenseId} has been ${status}.`);
+        setRecentRequests(prev => prev.filter(req => req._id !== expenseId));
+        setStats(prev => ({ ...prev, pendingRequests: prev.pendingRequests - 1 }));
     };
 
     return (
         <>
             <Navbar />
             <div className="p-8 bg-gray-50 min-h-screen font-sans">
-                <header className="mb-10 text-center">
+                {/* ... Header and StatCards sections are unchanged ... */}
+                 <header className="mb-10 text-center">
                     <h1 className="text-4xl font-bold text-gray-800">Hello, <span className="text-indigo-600">{user?.companyName || 'Company Name'}</span></h1>
                     <p className="text-gray-500 mt-1">Here's what's happening today.</p>
                 </header>
-
-                <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                 <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                     <StatCard icon={<FileText className="text-blue-500" />} title="Pending Requests" value={stats.pendingRequests} />
                     <StatCard icon={<CalendarCheck2 className="text-green-500" />} title="Approved This Month" value={stats.approvedThisMonth} />
                     <StatCard icon={<Banknote className="text-yellow-500" />} title="Expense Categories" value={stats.expenseCategories} />
@@ -101,24 +89,57 @@ const AdminDashboard = () => {
                 <section>
                     <h2 className="text-2xl font-bold text-gray-700 mb-4">Recent Pending Requests</h2>
                     <div className="space-y-4">
-                        {recentRequests.length > 0 ? (
-                            recentRequests.map(request => (
+                        {recentRequests.map(request => (
+                            // --- WRAPPED ExpenseCard to make it clickable ---
+                            <div key={request._id} onClick={() => handleOpenModal(request)} className="cursor-pointer">
                                 <ExpenseCard
-                                    key={request._id}
                                     request={request}
-                                    onApprove={() => handleApproval(request._id, 'approved')}
-                                    onReject={() => handleApproval(request._id, 'rejected')}
+                                    onApprove={(e) => { e.stopPropagation(); handleApproval(request._id, 'approved'); }}
+                                    onReject={(e) => { e.stopPropagation(); handleApproval(request._id, 'rejected'); }}
                                 />
-                            ))
-                        ) : (
-                            <p className="text-center text-gray-500 py-10 bg-white rounded-lg shadow-sm">No pending requests at the moment. ✨</p>
-                        )}
+                            </div>
+                        ))}
                     </div>
                 </section>
             </div>
+            
+            {/* --- RENDER THE MODAL --- */}
+            <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+                {selectedRequest && (
+                    <RequestCard 
+                        request={selectedRequest}
+                        onRemove={() => handleApproval(selectedRequest._id, 'removed')}
+                        onClose={handleCloseModal}
+                    />
+                )}
+            </Modal>
         </>
     );
 };
+
+// --- The simple ExpenseCard for the dashboard ---
+const ExpenseCard = ({ request, onApprove, onReject }) => (
+    <div className="bg-white p-5 rounded-xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-shadow hover:shadow-lg">
+        <div className="flex-grow">
+            <p className="font-bold text-lg text-gray-800">{request.description}</p>
+            <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
+                <span>{new Date(request.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                <span>•</span>
+                <span>{request.employeeName}</span>
+            </div>
+            <div className="mt-2">
+                <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">{request.category}</span>
+            </div>
+        </div>
+        <div className="flex items-center space-x-4 mt-4 sm:mt-0 w-full sm:w-auto">
+            <p className="text-xl font-bold text-gray-800 flex-grow sm:flex-grow-0">
+                ₹{request.amount.toFixed(2)}
+            </p>
+            <button onClick={onReject} className="p-3 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors" aria-label="Reject Expense"><XCircle size={24} /></button>
+            <button onClick={onApprove} className="p-3 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors" aria-label="Approve Expense"><CheckCircle size={24} /></button>
+        </div>
+    </div>
+);
 
 const StatCard = ({ icon, title, value }) => (
     <div className="bg-white p-6 rounded-xl shadow-md flex items-center justify-between transition-transform transform hover:scale-105">

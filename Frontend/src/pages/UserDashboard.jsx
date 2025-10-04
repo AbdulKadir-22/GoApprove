@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import UserNavbar from '../components/UserNavigation'; // Import the new UserNavbar
 import { Upload, Plus, ChevronRight, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 
 // --- Static Data ---
 const userExpenses = [
@@ -40,13 +41,15 @@ const UserDashboard = () => {
                 <div className="max-w-7xl mx-auto">
                     {/* --- Header with Buttons --- */}
                     <div className="flex flex-col sm:flex-row justify-end items-center gap-3 mb-6">
-                        <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
-                            <Upload size={18} />
-                            Upload
-                        </button>
+                        <NavLink to="/scanner">
+                            <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+                                <Upload size={18} />
+                                Upload
+                            </button>
+                        </NavLink>
                         <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition-colors">
                             <Plus size={18} />
-                            New Request
+                            <NavLink to="/submit">New Request</NavLink>
                         </button>
                     </div>
 
@@ -80,14 +83,14 @@ const UserDashboard = () => {
                                         <div><strong className="block text-gray-500">Paid By:</strong> {expense.paidBy}</div>
                                         <div className="text-right"><strong className="block text-gray-500">Amount:</strong> ₹{expense.amount.toLocaleString('en-IN')}</div>
                                     </div>
-                                    
+
                                     {/* Common Data Cells */}
                                     <div className="font-semibold text-gray-800 md:font-normal md:text-gray-600 md:p-4">{expense.description}</div>
                                     <div className="hidden md:block md:p-4 text-gray-600">{expense.date}</div>
                                     <div className="hidden md:block md:p-4 text-gray-600">{expense.category}</div>
                                     <div className="hidden md:block md:p-4 text-gray-600">{expense.paidBy}</div>
                                     <div className="hidden md:block md:p-4 text-right font-semibold text-gray-700">₹{expense.amount.toLocaleString('en-IN')}</div>
-                                    
+
                                     {/* Status (always visible) */}
                                     <div className="md:p-4 flex justify-end md:justify-center mt-2 md:mt-0">
                                         <StatusBadge status={expense.status} />
