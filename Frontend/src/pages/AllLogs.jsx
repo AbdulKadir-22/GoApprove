@@ -7,20 +7,15 @@ const allExpenses = [
     { id: 2, description: 'Night Stay on work trip', date: '2025-10-03', employeeName: 'Rohan Verma', category: 'Stay', amount: 6000, status: 'Approved' },
     { id: 3, description: 'Lunch with Client', date: '2025-10-01', employeeName: 'Anjali Singh', category: 'Meals', amount: 4500, status: 'Approved' },
     { id: 4, description: 'Office Internet Bill', date: '2025-09-28', employeeName: 'Priya Sharma', category: 'Utilities', amount: 3000, status: 'Pending' },
-    { id: 5, description: 'New Office Chairs', date: '2025-08-18', employeeName: 'Vikram Rathod', category: 'Office Supplies', amount: 25000, status: 'Pending' },
 ];
 
-// --- 1. Filter for only "Pending" requests from the start ---
-const pendingExpenses = allExpenses.filter(exp => exp.status === 'Pending');
-
-const categories = ['All', ...new Set(pendingExpenses.map(exp => exp.category))];
+const categories = ['All', ...new Set(allExpenses.map(exp => exp.category))];
 const months = ['All', 'October', 'September', 'August'];
 
-const ClaimRequestsPage = () => {
+const AllLogsPage = () => {
 
-    // Initialize state with only pending expenses
-    const [expenses, setExpenses] = useState(pendingExpenses);
-    const [filteredExpenses, setFilteredExpenses] = useState(pendingExpenses);
+    const [expenses, setExpenses] = useState(allExpenses);
+    const [filteredExpenses, setFilteredExpenses] = useState(allExpenses);
 
     const [filters, setFilters] = useState({
         searchTerm: '',
@@ -29,29 +24,40 @@ const ClaimRequestsPage = () => {
         sortBy: 'newest'
     });
 
-    // Filtering and Sorting Logic (no changes needed here)
+    // --- Filtering and Sorting Logic ---
     useEffect(() => {
         let result = [...expenses];
+
+        // 1. Filter by Search Term (employee name)
         if (filters.searchTerm) {
             result = result.filter(exp =>
                 exp.employeeName.toLowerCase().includes(filters.searchTerm.toLowerCase())
             );
         }
+
+        // 2. Filter by Category
         if (filters.category !== 'All') {
             result = result.filter(exp => exp.category === filters.category);
         }
+
+        // 3. Filter by Month (simple implementation)
         if (filters.month !== 'All') {
             const monthIndex = new Date(`${filters.month} 1, 2025`).getMonth();
             result = result.filter(exp => new Date(exp.date).getMonth() === monthIndex);
         }
+
+        // 4. Sort by Date
         result.sort((a, b) => {
             const dateA = new Date(a.date);
             const dateB = new Date(b.date);
             return filters.sortBy === 'newest' ? dateB - dateA : dateA - dateB;
         });
+
         setFilteredExpenses(result);
+
     }, [filters, expenses]);
 
+    // --- Event Handlers ---
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
         setFilters(prev => ({ ...prev, [name]: value }));
@@ -66,13 +72,21 @@ const ClaimRequestsPage = () => {
                 <div className="bg-white p-4 rounded-xl shadow-sm mb-8">
                     <div className="flex flex-wrap items-center gap-4">
                         <span className="font-semibold text-gray-700">Filters</span>
+
+                        {/* Category Dropdown */}
                         <Select name="category" value={filters.category} onChange={handleFilterChange} options={categories} />
+
+                        {/* Month Dropdown */}
                         <Select name="month" value={filters.month} onChange={handleFilterChange} options={months} />
+
+                        {/* Sort By Radio */}
                         <div className="flex items-center gap-4 ml-auto">
                             <span className="text-sm font-medium text-gray-600">Sort By</span>
                             <RadioGroup name="sortBy" value={filters.sortBy} onChange={handleFilterChange} />
                         </div>
                     </div>
+
+                    {/* Search Bar */}
                     <div className="mt-4 flex items-center gap-2">
                         <div className="relative flex-grow">
                             <input
@@ -93,9 +107,9 @@ const ClaimRequestsPage = () => {
                 {/* Expenses List */}
                 <div className="space-y-4">
                     {filteredExpenses.length > 0 ? (
-                        filteredExpenses.map(expense => <ExpenseCard key={expense.id} expense={expense} />)
+                        filteredExpenses.map(expense => <ExpenseListItem key={expense.id} expense={expense} />)
                     ) : (
-                        <p className="text-center text-gray-500 py-10">No pending requests match the current filters.</p>
+                        <p className="text-center text-gray-500 py-10">No expenses match the current filters.</p>
                     )}
                 </div>
             </div>
@@ -132,26 +146,37 @@ const RadioGroup = ({ name, value, onChange }) => (
     </div>
 );
 
-// --- 2. Replaced ExpenseListItem with your preferred ExpenseCard component ---
-// (Note: Approve/Reject buttons are removed as this page is for viewing pending requests only)
-const ExpenseCard = ({ expense }) => (
-    <div className="flex items-center justify-between bg-white shadow-md rounded-2xl p-6 w-full  transition-shadow hover:shadow-lg">
-        <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold text-black">{expense.description}</h2>
-            <p className="text-sm text-gray-500">
-                {new Date(expense.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-            </p>
-            <p className="text-sm text-gray-500">{expense.employeeName}</p>
-            <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-xs font-medium px-3 py-1 rounded-full w-fit shadow-sm border border-amber-200">
-                <span className="h-2 w-2 rounded-full bg-amber-400"></span>
-                {expense.category}
-            </span>
+
+const StatusIndicator = ({ status }) => {
+    const statusStyles = {
+        'Approved': 'bg-green-500',
+        'Pending': 'bg-orange-400',
+        'Rejected': 'bg-red-500',
+    };
+    return <div className={`w-5 h-5 rounded-full ${statusStyles[status] || 'bg-gray-400'}`}></div>;
+};
+
+const ExpenseListItem = ({ expense }) => (
+    <div className="bg-white p-5 rounded-xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex-grow">
+            <p className="font-bold text-lg text-gray-800">{expense.description}</p>
+            <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
+                <span>{new Date(expense.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                <span>•</span>
+                <span>{expense.employeeName}</span>
+            </div>
+            <div className="mt-2">
+                <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">{expense.category}</span>
+            </div>
         </div>
-        <div className="flex items-center space-x-2 bg-orange-100 px-5 py-2 rounded-full">
-            <span className="h-5 w-5 bg-orange-400 rounded-full"></span>
-            <span className="text-lg font-bold text-black">₹ {expense.amount.toLocaleString('en-IN')}</span>
+        <div className="flex items-center space-x-4 mt-4 sm:mt-0 w-full sm:w-auto justify-end">
+            <div className="text-right">
+                <p className="text-xs text-gray-500">Expense Amount</p>
+                <p className="text-xl font-bold text-gray-800">₹ {expense.amount.toLocaleString('en-IN')}</p>
+            </div>
+            <StatusIndicator status={expense.status} />
         </div>
     </div>
 );
 
-export default ClaimRequestsPage;
+export default AllLogsPage;
