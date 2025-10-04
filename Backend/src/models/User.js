@@ -88,10 +88,11 @@ const { Schema, model, Types } = require('mongoose');
 const { Roles } = require('./enums');
 
 const UserSchema = new Schema({
-  company_id: { type: Types.ObjectId, ref: 'Company', required: true, index: true },
+  company_id: { type: Types.ObjectId, ref: 'Company',  index: true },
   name: { type: String, required: true },
   email: { type: String, required: true, index: true },
-  role: { type: String, enum: Object.values(Roles), required: true },
+  role: { type: String, enum: Object.values(Roles)},
+  password:{type:String},
   manager_id: { type: Types.ObjectId, ref: 'User', default: null },
   is_active: { type: Boolean, default: true }
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });

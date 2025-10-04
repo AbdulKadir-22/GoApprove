@@ -7,7 +7,9 @@ module.exports = class AdminService {
         console.log("service");
         console.log(companyId, name, email, role, managerId);
     if (!Object.values(Enums.Roles).includes(role)) throw new Error('Invalid role');
-    const company = await Company.findById(companyId).lean();
+        
+        const company = await Company.findById(companyId).lean();
+        // console.log(company);
     if (!company) throw new Error('Company not found');
     if (managerId) {
       const mgr = await User.findOne({ _id: managerId, company_id: companyId, role: Enums.Roles.Manager });

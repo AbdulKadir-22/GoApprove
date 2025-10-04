@@ -5,7 +5,7 @@ module.exports = class AdminController {
   static async createUser(req, res, next) {
     try {
       console.log("controller");
-      const companyId = req.user.email; // from auth middleware
+    //   const companyId = req.user.email; // from auth middleware
       console.log({...req.body});
       const out = await AdminService.createUser({ ...req.body });
       console.log()
