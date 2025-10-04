@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import ExpenseSubmission from './pages/ExpenseSubmission';
 import ReceiptScanner from './components/ReceiptScanner'
 import AdminDashboard from './pages/AdminDasboard';
+import ClaimRequestsPage from './pages/ClaimRequest';
 
 
 const AppRoutes = () => {
@@ -14,6 +15,7 @@ const AppRoutes = () => {
       <Route path="/submit" element={<ExpenseSubmission/>}/>
       <Route path="/scanner" element={<ReceiptScanner/>}/>
       <Route path="/" element={<AdminDashboard/>}/> 
+      <Route path="/claim-requests" element={<ClaimRequestsPage/>}/>
     </Routes>
   );
 };
