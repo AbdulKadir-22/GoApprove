@@ -3,6 +3,7 @@ import '../styles/ExpenseSubmission.css'; // Standard CSS import
 import FormInput from '../components/FormInput';
 import FormSelect from '../components/FormSelect';
 import FormRadio from '../components/FormRadio';
+import Navbar from '../components/Navbar';
 
 const ExpenseSubmission = () => {
   // State for all form fields
@@ -89,6 +90,7 @@ const ExpenseSubmission = () => {
 
   return (
     <div className="page-container">
+      <Navbar/>
       <header className="header">
         <h1>Expense Submission</h1>
         <div className="header-actions">

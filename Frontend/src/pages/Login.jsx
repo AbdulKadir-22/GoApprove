@@ -55,8 +55,9 @@ const Login = () => {
     );
 
     return (
+        
         <div className="w-full p-0 md:pr-30 md:pl-30 pt-0 p flex flex-col md:flex-row bg-white overflow-hidden ">
-
+            
             <div className="hidden md:flex md:w-1/2 items-center justify-center p-12">
                 <img
                     src={sidepanel}
@@ -120,8 +121,6 @@ const Login = () => {
                 <br></br>
                 <a href="#" className="text-4x1 font-semibold text-center" style={{ color: '#5e17eb' }}>Forgot Password?</a>
             </div>
-
-            {/* Image Section */}
 
         </div>
     );
