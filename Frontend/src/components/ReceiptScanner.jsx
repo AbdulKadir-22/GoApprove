@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-// This would typically be in an index.html, but for a self-contained component,
-// we'll assume pdf.js is loaded or handle it dynamically.
 const PDFJS_WORKER_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
 
 const ReceiptScanner = () => {
@@ -16,12 +14,16 @@ const ReceiptScanner = () => {
         expenseLines: '',
         amount: '',
         expenseType: 'Other',
+        convertedAmount: '',
     });
 
     const fileInputRef = useRef(null);
     const canvasRef = useRef(null);
 
-    const expenseCategories = ['Other', 'Food & Dining', 'Stay', 'Travel', 'Fuel', 'Health/Medical', 'Education', 'Office Supplies', 'Utilities', 'Entertainment'];
+    const expenseCategories = ['Other', 'Food & Dining', 'Stay', 'Vehicle', 'Fuel', 'Health/Medical', 'Education', 'Office Supplies', 'Utilities', 'Entertainment'];
+    
+    // TODO: Replace this with the company's currency fetched from the backend.
+    const companyCurrency = 'USD';
 
     useEffect(() => {
         // Dynamically load the pdf.js script and set up the worker.
@@ -108,19 +110,19 @@ const ReceiptScanner = () => {
     };
     
     const analyzeReceiptWithAI = async (base64ImageData) => {
-        // Reverted to hardcoded key to resolve build environment issue.
-        const apiKey = "AIzaSyBglI8ItcPFikZyMucY7YalfNYXk_IjCuY";
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
         const imageData = base64ImageData.split(',')[1];
 
         const prompt = `
-            You are an expert receipt scanning AI. Analyze the following receipt image and extract the following details:
+            You are an expert receipt scanning AI. Analyze the receipt image and extract the following:
             1.  **vendor**: The name of the store or service provider.
-            2.  **date**: The full date of the transaction. If possible, format it as YYYY-MM-DD. Handle various date formats including words (e.g., 'Sep 30, 2025').
-            3.  **total**: The final total amount paid, including any currency symbol found on the receipt (e.g., ₹, $, €).
-            4.  **category**: The most likely expense category. Choose from: 'Food & Dining', 'Stay', 'Travel', 'Fuel', 'Health/Medical', 'Education', 'Office Supplies', 'Utilities', 'Entertainment', 'Other'.
-            5.  **lineItems**: An array of objects for each item on the receipt. Each object should have two keys: 'description' (the item name) and 'amount' (the item price as a string). If no clear line items are present, return an empty array [].
-            Return the result as a single, clean JSON object with these exact keys: vendor, date, total, category, lineItems. Do not include any other text, explanations, or markdown formatting like \`\`\`json.
+            2.  **date**: The transaction date (YYYY-MM-DD). Handle word-based dates.
+            3.  **total**: The final total amount paid (numeric value only, without currency).
+            4.  **currency**: The 3-letter ISO 4217 currency code for the total amount (e.g., INR, USD, EUR). If you can only identify a symbol, infer the most likely ISO code. If no currency is found, return an empty string.
+            5.  **category**: The most likely expense category. Choose from: 'Food & Dining', 'Stay', 'Travel', 'Fuel', 'Health/Medical', 'Education', 'Office Supplies', 'Utilities', 'Entertainment', 'Other'.
+            6.  **lineItems**: An array of objects for each item, with 'description' and 'amount' keys. Return [] if none.
+            Return a single, clean JSON object with these keys. Do not include markdown.
         `;
         const payload = {
             contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: imageData } }] }]
@@ -153,6 +155,37 @@ const ReceiptScanner = () => {
         }
     };
 
+    const convertCurrency = async (amount, fromCurrency, toCurrency) => {
+        const numericAmount = parseFloat(String(amount).replace(/[^0-9.-]+/g, ""));
+        if (isNaN(numericAmount)) return 'Invalid Amount';
+
+        if (!fromCurrency || !toCurrency || fromCurrency.toUpperCase() === toCurrency.toUpperCase()) {
+            return `${numericAmount.toFixed(2)} ${toCurrency}`;
+        }
+
+        try {
+            // Using a more reliable, open-source API for currency conversion.
+            const response = await fetch(`https://api.frankfurter.app/latest?from=${fromCurrency}&to=${toCurrency}`);
+            if (!response.ok) {
+                const errorDetails = await response.text();
+                throw new Error(`Failed to fetch exchange rates. Details: ${errorDetails}`);
+            }
+            
+            const data = await response.json();
+            const rate = data.rates[toCurrency];
+
+            if (rate) {
+                const converted = (numericAmount * rate).toFixed(2);
+                return `${converted} ${toCurrency}`;
+            }
+            return `Conversion not available`;
+        } catch (error) {
+            console.error("Currency conversion error:", error);
+            showNotification("Could not convert currency.");
+            return `${numericAmount.toFixed(2)} ${fromCurrency}`; // Return original amount on failure
+        }
+    };
+
     const handleAnalyzeClick = async () => {
         if (!imagePreview) {
             showNotification("Please upload an image first.");
@@ -160,21 +193,33 @@ const ReceiptScanner = () => {
         }
 
         setIsLoading(true);
-        setStatusText('Analyzing receipt with AI... This may take a moment.');
+        setStatusText('Analyzing receipt with AI...');
+        setFormData(prev => ({ ...prev, convertedAmount: 'Converting...' }));
 
         try {
             const result = await analyzeReceiptWithAI(imagePreview);
             if (result && !result.error) {
                 const categoryExists = expenseCategories.includes(result.category);
-                setFormData({
+                const originalCurrencyCode = result.currency;
+                
+                const initialFormData = {
                     vendor: result.vendor || '',
                     date: result.date || '',
-                    amount: result.total || '',
+                    amount: `${result.total || ''} ${originalCurrencyCode || ''}`.trim(),
                     description: result.vendor ? `Purchase from ${result.vendor}` : '',
                     expenseLines: (result.lineItems || []).map(item => `${item.description || 'N/A'} - ${item.amount || 'N/A'}`).join('\n'),
                     expenseType: categoryExists ? result.category : 'Other',
-                });
-                setStatusText('Analysis complete!');
+                    convertedAmount: '', // Clear previous conversion
+                };
+                setFormData(initialFormData);
+
+                setStatusText('Analysis complete! Converting currency...');
+
+                const converted = await convertCurrency(result.total, originalCurrencyCode, companyCurrency);
+                
+                setFormData(prev => ({ ...prev, convertedAmount: converted }));
+
+                setStatusText('Analysis and conversion complete!');
             } else {
                 throw new Error(result.error || 'The AI could not process the receipt.');
             }
@@ -182,6 +227,7 @@ const ReceiptScanner = () => {
             console.error('AI Analysis Error:', error);
             showNotification(`Error: ${error.message}`);
             setStatusText('An error occurred during AI analysis.');
+             setFormData(prev => ({ ...prev, convertedAmount: 'Failed' }));
         } finally {
             setTimeout(() => {
                 setIsLoading(false);
@@ -224,7 +270,7 @@ const ReceiptScanner = () => {
                         <div className="w-full mt-3">
                             <button onClick={handleAnalyzeClick} disabled={isLoading} className="w-full bg-green-500 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-600 transition-colors duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
                                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-                                Analyze with AI
+                                Analyze 
                             </button>
                         </div>
                     )}
@@ -272,7 +318,18 @@ const ReceiptScanner = () => {
                                 </select>
                             </div>
                         </div>
+                         <div>
+                            <label htmlFor="convertedAmount" className="block text-sm font-medium text-gray-700">Converted Amount ({companyCurrency})</label>
+                            <input type="text" id="convertedAmount" value={formData.convertedAmount} readOnly className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-50" />
+                        </div>
                     </div>
+                </div>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-gray-200">
+                <div className="bg-gray-100 rounded-lg p-4 flex justify-between items-center">
+                    <span className="text-lg font-bold text-gray-800">Total Reimbursement Amount:</span>
+                    <span className="text-2xl font-bold text-indigo-600">{formData.convertedAmount || 'N/A'}</span>
                 </div>
             </div>
 
