@@ -40,11 +40,11 @@ const loginUser = async (req, res) => {
 //signup user
 const signupUser = async (req, res) => {
 
-  const {  username, email, password } = req.body;
+  const {  username, email, password ,country} = req.body;
 
   try {
     
-    const user = await signup(username, email, password);
+    const user = await signup(username, email, password,country);
 
     const token = createToken(user._id);
 
@@ -82,9 +82,9 @@ const login = async function (email, password) {
   return user;
 };
 
-const signup = async function (username, email, password) {
+const signup = async function (username, email, password, country) {
   
-  if (!username || !email || !password) {
+  if (!username || !email || !password || !country) {
     throw Error(`First name, username, email, and password are all required`);
   }
   if (!validator.isEmail(email)) {
@@ -107,7 +107,7 @@ const signup = async function (username, email, password) {
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(password, salt);
 
-  const user = await User.create({ name:username, email, password: hash });
+  const user = await User.create({ name:username, email, password: hash,country });
 
   return user;
 };
