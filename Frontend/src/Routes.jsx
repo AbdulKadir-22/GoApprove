@@ -6,6 +6,11 @@ import ReceiptScanner from './components/ReceiptScanner'
 import AdminDashboard from './pages/AdminDasboard';
 import ClaimRequestsPage from './pages/ClaimRequest';
 import AllLogsPage from './pages/AllLogs';
+import ProfilePage from './pages/ProfilePage';
+import UserDashboard from './pages/UserDashboard';
+import UserProfilePage from './pages/UserProfile';
+import EmployeeProfilePage from './pages/ManagerProfile';
+import ApprovalPage from './pages/Approval';
 
 
 const AppRoutes = () => {
@@ -18,6 +23,13 @@ const AppRoutes = () => {
       <Route path="/" element={<AdminDashboard/>}/> 
       <Route path="/claim-requests" element={<ClaimRequestsPage/>}/>
       <Route path="/all-logs" element={<AllLogsPage/>}/>
+      <Route path="/profile" element={<ProfilePage/>}/>
+      <Route path="/user" element={<UserDashboard/>}/>
+      <Route path="/user-profile" element={<UserProfilePage/>}/>
+      <Route path="/manager-profile" element={<EmployeeProfilePage/>}/>
+      <Route path="/manager-dasboard" element={<ApprovalPage/>}/>
+      <Route path="/" element={<EmployeeProfilePage/>}/>
+
     </Routes>
   );
 };
