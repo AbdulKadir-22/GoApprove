@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import Signup from './pages/Signup';
 import Login from './pages/Login';
+import ExpenseSubmission from './pages/ExpenseSubmission';
 
 
 const AppRoutes = () => {
@@ -8,6 +9,7 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/submit" element={<ExpenseSubmission/>}/>
     </Routes>
   );
 };

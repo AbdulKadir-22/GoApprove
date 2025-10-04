@@ -1,7 +1,7 @@
 
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from "react-router-dom";
-import { AuthProvider } from './Context/AuthContext.jsx';
+import { AuthProvider } from './contexts/AuthContext.jsx';
 import './index.css'
 import App from './App.jsx'
 
