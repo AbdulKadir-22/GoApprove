@@ -1,7 +1,6 @@
-import React from 'react';
-import { CheckCircle, XCircle } from 'lucide-react';
 
-const ExpenseCard = ({ request, onApprove, onReject }) => {
+
+const ExpenseCard = ({ request}) => {
   return (
     <div className="flex items-center justify-between bg-white shadow-md rounded-2xl p-6 w-full  transition-shadow hover:shadow-lg">
       
