@@ -1,13 +1,16 @@
 import React, { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import axiosInstance from "../api/axios";
-import { useAuth } from "../contexts/AuthContext";
-import sidepanel from "../assets/SidePanel1.png";
-import logo1 from "../assets/logo2.png";
+import { NavLink } from "react-router-dom"; // Assuming react-router-dom is set up
+import axios from "axios"; // Import axios directly
+
+// Define the axios instance here to resolve the import issue
+const axiosInstance = axios.create({
+  baseURL: 'http://localhost:5000', // Your Node.js server address
+});
+
 
 const Login = () => {
-    const navigate = useNavigate();
-    const { login } = useAuth();
+    // const navigate = useNavigate();
+    // const { login } = useAuth(); // Assuming useAuth context is available
 
     const [formData, setFormData] = useState({
         email: "",
@@ -32,8 +35,10 @@ const Login = () => {
             const { token } = response.data;
 
             if (token) {
-                login(token);
-                navigate("/form");
+                // In a real app with context: login(token);
+                console.log("Login successful, token:", token);
+                // In a real app with router: navigate("/form");
+                window.location.href = "/"; // Redirect to a dashboard page
             }
         } catch (err) {
             const errorMessage = err.response?.data?.error || "Login failed. Please try again.";
@@ -43,7 +48,6 @@ const Login = () => {
         }
     };
 
-    // This is the password toggle icon component from your Signup page.
     const PasswordToggleIcon = ({ show, onClick }) => (
         <button type="button" onClick={onClick} className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-[#5e17eb]">
             {show ? (
@@ -56,29 +60,27 @@ const Login = () => {
 
     return (
         
-        <div className="w-full p-0 md:pr-30 md:pl-30 pt-0 p flex flex-col md:flex-row bg-white overflow-hidden ">
+        <div className="w-full p-0 flex flex-col md:flex-row bg-white overflow-hidden ">
             
             <div className="hidden md:flex md:w-1/2 items-center justify-center p-12">
                 <img
-                    src={sidepanel}
+                    src="https://placehold.co/600x600/f0f0f0/5e17eb?text=Welcome%20Back"
                     alt="Expense Management Illustration"
                     className="w-full h-auto object-contain"
-                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x600/5e17eb/ffffff?text=Illustration'; }}
                 />
             </div>
             <div className="w-full md:w-1/2 p-8 sm:p-12 flex flex-col justify-center">
 
                 <div className="flex items-left mb-12">
                     <img
-                        src={logo1}
+                        src="https://placehold.co/256x64/5e17eb/ffffff?text=GoApprove"
                         alt="GoApprove Logo"
                         className="w-64 h-auto"
-                        onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/256x64/5e17eb/ffffff?text=GoApprove'; }}
                     />
                 </div>
 
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">Login</h2>
-                <p className=" mb-8 text-3xl"style={{ color: '#5e17eb' }}>Login in to your expense Dashboard</p>
+                <p className=" mb-8 text-xl" style={{ color: '#5e17eb' }}>Login to your expense Dashboard</p>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
@@ -119,7 +121,7 @@ const Login = () => {
                     </NavLink>
                 </p>
                 <br></br>
-                <a href="#" className="text-4x1 font-semibold text-center" style={{ color: '#5e17eb' }}>Forgot Password?</a>
+                <a href="#" className="text-sm font-semibold text-center" style={{ color: '#5e17eb' }}>Forgot Password?</a>
             </div>
 
         </div>
@@ -127,3 +129,4 @@ const Login = () => {
 };
 
 export default Login;
+

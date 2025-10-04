@@ -1,8 +1,10 @@
-import React, { useState, useMemo } from "react";
-// import { NavLink, useNavigate } from "react-router-dom"; 
-// import axiosInstance from "../api/axios";
-import sidepanel from "../assets/SidePanel.png";
-import logo1 from "../assets/logo2.png"
+import React, { useState } from "react";
+import axios from "axios"; // Import axios directly
+
+// Define the axios instance here to resolve the import issue
+const axiosInstance = axios.create({
+  baseURL: 'http://localhost:5000', // Your Node.js server address
+});
 
 const countries = [
     "United States", "Canada", "Mexico", "United Kingdom", "Germany", "France", "Japan", "Australia", "India", "Brazil"
@@ -24,8 +26,6 @@ const Signup = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-
-    // const navigate = useNavigate();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -52,13 +52,28 @@ const Signup = () => {
         setLoading(true);
 
         try {
-            const { confirmPassword, ...postData } = formData;
+            // Destructure to remove confirmPassword and prepare data for the backend
+            const { confirmPassword, name, ...restOfData } = formData;
+
+            // Split the single 'name' field into firstname and lastname for the backend
+            const nameParts = name.trim().split(' ');
+            const firstname = nameParts[0] || '';
+            const lastname = nameParts.slice(1).join(' ') || '';
+            // Create a simple username from the name
+            const username = name.replace(/\s+/g, '').toLowerCase();
+
+            // Construct the payload the backend expects
+            const postData = {
+                ...restOfData,
+                firstname,
+                lastname,
+                username,
+            };
 
             await axiosInstance.post("/user/signup", postData);
             setSuccess("Account created successfully! Redirecting to login...");
 
             setTimeout(() => {
-                // In a real app: navigate("/login");
                 window.location.href = "/login";
             }, 2000);
 
@@ -80,95 +95,88 @@ const Signup = () => {
     );
 
     return (
-
-            <div className="w-full p-0 md:pr-30 md:pl-30 pt-0 p flex flex-col md:flex-row bg-white overflow-hidden ">
-
-                <div className="w-full md:w-1/2 p-8 sm:p-12 flex flex-col justify-center">
-
-                    <div className="flex items-left mb-12">                      
-                        <img
-                            src={logo1}
-                            alt="Expense Management Illustration"
-                            className="w-64 h-auto"
-                        />
-                    </div>
-                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Register</h2>
-                    <p className="text-gray-600 mb-8">Welcome to GoApprove.</p>
-
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        {/* Form Fields */}
-                        <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                            <input id="name" type="text" name="name" placeholder="John Doe" className="w-full px-4 py-3 rounded-lg bg-gray-100 border-transparent focus:outline-none focus:ring-2 transition-all duration-300" style={{ '--tw-ring-color': '#5e17eb' }} value={formData.name} onChange={handleChange} required />
-                        </div>
-
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                            <input id="email" type="email" name="email" placeholder="you@example.com" className="w-full px-4 py-3 rounded-lg bg-gray-100 border-transparent focus:outline-none focus:ring-2 transition-all duration-300" style={{ '--tw-ring-color': '#5e17eb' }} value={formData.email} onChange={handleChange} required />
-                        </div>
-
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Set Password</label>
-                            <div className="relative">
-                                <input id="password" type={showPassword ? 'text' : 'password'} name="password" placeholder="Enter your password" className="w-full px-4 py-3 rounded-lg bg-gray-100 border-transparent focus:outline-none focus:ring-2 transition-all duration-300" style={{ '--tw-ring-color': '#5e17eb' }} value={formData.password} onChange={handleChange} required />
-                                <PasswordToggleIcon show={showPassword} onClick={() => setShowPassword(!showPassword)} />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                            <div className="relative">
-                                <input id="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" placeholder="Confirm your password" className="w-full px-4 py-3 rounded-lg bg-gray-100 border-transparent focus:outline-none focus:ring-2 transition-all duration-300" style={{ '--tw-ring-color': '#5e17eb' }} value={formData.confirmPassword} onChange={handleChange} required />
-                                <PasswordToggleIcon show={showConfirmPassword} onClick={() => setShowConfirmPassword(!showConfirmPassword)} />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">Select Country</label>
-                            <select id="country" name="country" className="w-full px-4 py-3 rounded-lg bg-gray-100 border-transparent focus:outline-none focus:ring-2 transition-all duration-300" style={{ '--tw-ring-color': '#5e17eb' }} value={formData.country} onChange={handleChange} required>
-                                <option value="" disabled>Please select</option>
-                                {countries.map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                        </div>
-
-                        {/* Error and Success Messages */}
-                        {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md text-sm" role="alert"><p>{error}</p></div>}
-                        {success && <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md text-sm" role="alert"><p>{success}</p></div>}
-
-                        {/* Submit Button */}
-                        <div>
-                            <button type="submit" className="w-full group flex justify-center items-center text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed" style={{ backgroundColor: '#5e17eb' }} onMouseOver={e => e.currentTarget.style.backgroundColor = '#5014c2'} onMouseOut={e => e.currentTarget.style.backgroundColor = '#5e17eb'} disabled={loading}>
-                                {loading ? (
-                                    <>
-                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                        <span>Registering...</span>
-                                    </>
-                                ) : (
-                                    <span>Register</span>
-                                )}
-                            </button>
-                        </div>
-                    </form>
-
-                    <p className="text-center text-gray-600 mt-8 text-sm">
-                        Already have an account?
-                        <a href="/login" className="font-semibold ml-1" style={{ color: '#5e17eb' }}>
-                            Login
-                        </a>
-                    </p>
-                </div>
-
-                <div className="hidden md:flex md:w-1/2 items-center justify-center p-12">
+        <div className="w-full p-0 flex flex-col md:flex-row bg-white overflow-hidden ">
+            <div className="w-full md:w-1/2 p-8 sm:p-12 flex flex-col justify-center">
+                <div className="flex items-left mb-12">
                     <img
-                        src={sidepanel}
-                        alt="Expense Management Illustration"
-                        className="w-full h-auto object-contain "
-                        onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x400/5e17eb/ffffff?text=Illustration'; }}
+                        src="https://placehold.co/256x64/5e17eb/ffffff?text=GoApprove"
+                        alt="GoApprove Logo"
+                        className="w-64 h-auto"
                     />
-
                 </div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Register</h2>
+                <p className="text-gray-600 mb-8">Welcome to GoApprove.</p>
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <input id="name" type="text" name="name" placeholder="John Doe" className="w-full px-4 py-3 rounded-lg bg-gray-100 border-transparent focus:outline-none focus:ring-2 transition-all duration-300" style={{ '--tw-ring-color': '#5e17eb' }} value={formData.name} onChange={handleChange} required />
+                    </div>
+
+                    <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <input id="email" type="email" name="email" placeholder="you@example.com" className="w-full px-4 py-3 rounded-lg bg-gray-100 border-transparent focus:outline-none focus:ring-2 transition-all duration-300" style={{ '--tw-ring-color': '#5e17eb' }} value={formData.email} onChange={handleChange} required />
+                    </div>
+
+                    <div>
+                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Set Password</label>
+                        <div className="relative">
+                            <input id="password" type={showPassword ? 'text' : 'password'} name="password" placeholder="Enter your password" className="w-full px-4 py-3 rounded-lg bg-gray-100 border-transparent focus:outline-none focus:ring-2 transition-all duration-300" style={{ '--tw-ring-color': '#5e17eb' }} value={formData.password} onChange={handleChange} required />
+                            <PasswordToggleIcon show={showPassword} onClick={() => setShowPassword(!showPassword)} />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                        <div className="relative">
+                            <input id="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" placeholder="Confirm your password" className="w-full px-4 py-3 rounded-lg bg-gray-100 border-transparent focus:outline-none focus:ring-2 transition-all duration-300" style={{ '--tw-ring-color': '#5e17eb' }} value={formData.confirmPassword} onChange={handleChange} required />
+                            <PasswordToggleIcon show={showConfirmPassword} onClick={() => setShowConfirmPassword(!showConfirmPassword)} />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">Select Country</label>
+                        <select id="country" name="country" className="w-full px-4 py-3 rounded-lg bg-gray-100 border-transparent focus:outline-none focus:ring-2 transition-all duration-300" style={{ '--tw-ring-color': '#5e17eb' }} value={formData.country} onChange={handleChange} required>
+                            <option value="" disabled>Please select</option>
+                            {countries.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                    </div>
+
+                    {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md text-sm" role="alert"><p>{error}</p></div>}
+                    {success && <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md text-sm" role="alert"><p>{success}</p></div>}
+
+                    <div>
+                        <button type="submit" className="w-full group flex justify-center items-center text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed" style={{ backgroundColor: '#5e17eb' }} onMouseOver={e => e.currentTarget.style.backgroundColor = '#5014c2'} onMouseOut={e => e.currentTarget.style.backgroundColor = '#5e17eb'} disabled={loading}>
+                            {loading ? (
+                                <>
+                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    <span>Registering...</span>
+                                </>
+                            ) : (
+                                <span>Register</span>
+                            )}
+                        </button>
+                    </div>
+                </form>
+
+                <p className="text-center text-gray-600 mt-8 text-sm">
+                    Already have an account?
+                    <a href="/login" className="font-semibold ml-1" style={{ color: '#5e17eb' }}>
+                        Login
+                    </a>
+                </p>
             </div>
+
+            <div className="hidden md:flex md:w-1/2 items-center justify-center p-12">
+                <img
+                    src="https://placehold.co/600x600/f0f0f0/5e17eb?text=Welcome"
+                    alt="Expense Management Illustration"
+                    className="w-full h-auto object-contain "
+                />
+            </div>
+        </div>
     );
 };
 
 export default Signup;
+
